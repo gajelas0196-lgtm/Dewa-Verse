@@ -8,33 +8,28 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'api_config.dart';
 import 'splash.dart';
 
-// ─── Palette: Dark Premium dengan Warna Cerah (Tanpa Hitam) ──────────────────
+// ─── Palette: Dark Premium ──────────────────
 class _C {
-  // Background - navy/indigo tones
-  static const bg         = Color(0xFF0B1120);    // navy gelap
-  static const surface    = Color(0xFF111827);    // slate gelap
-  static const card       = Color(0xFF1E293B);    // slate medium
-  static const border     = Color(0xFF334155);    // slate terang
-  static const borderLit  = Color(0xFF475569);    // slate lebih terang
+  static const bg         = Color(0xFF0B1120);    
+  static const surface    = Color(0xFF111827);    
+  static const card       = Color(0xFF1E293B);    
+  static const border     = Color(0xFF334155);    
+  static const borderLit  = Color(0xFF475569);    
 
-  // Warna aksen - biru, cyan, emas (cerah)
-  static const steel      = Color(0xFF60A5FA);    // biru terang
-  static const blueMid    = Color(0xFF3B82F6);    // biru medium
-  static const blueLight  = Color(0xFF93C5FD);    // biru muda
-  static const chrome     = Color(0xFF38BDF8);    // cyan
-  static const frost      = Color(0xFFBAE6FD);    // cyan muda
+  static const steel      = Color(0xFF60A5FA);    
+  static const blueMid    = Color(0xFF3B82F6);    
+  static const blueLight  = Color(0xFF93C5FD);    
+  static const chrome     = Color(0xFF38BDF8);    
+  static const frost      = Color(0xFFBAE6FD);    
 
-  // Warna status
   static const green      = Color(0xFF22C55E);
   static const amber      = Color(0xFFF59E0B);
   static const red        = Color(0xFFEF4444);
 
-  // Teks
-  static const text       = Color(0xFFF3F4F6);    // putih
-  static const textSub    = Color(0xFF9CA3AF);    // abu terang
-  static const textDim    = Color(0xFF6B7280);    // abu medium
+  static const text       = Color(0xFFF3F4F6);    
+  static const textSub    = Color(0xFF9CA3AF);    
+  static const textDim    = Color(0xFF6B7280);    
 
-  // Gradien
   static const LinearGradient metalGrad = LinearGradient(
     colors: [Color(0xFF2563EB), Color(0xFF1D4ED8), Color(0xFF1E3A8A)],
     begin: Alignment.topLeft,
@@ -65,7 +60,6 @@ class _LoginPageState extends State<LoginPage>
   bool _obscurePass     = true;
   String? _androidId;
 
-  // Animations
   late AnimationController _bgCtrl;
   late AnimationController _entranceCtrl;
   late AnimationController _logoCtrl;
@@ -131,7 +125,6 @@ class _LoginPageState extends State<LoginPage>
     super.dispose();
   }
 
-  // ─── Init auto-login ──────────────────────────────────────────────────────
   Future<void> _initLogin() async {
     final info = await DeviceInfoPlugin().androidInfo;
     _androidId = info.id;
@@ -167,7 +160,6 @@ class _LoginPageState extends State<LoginPage>
   List<Map<String, dynamic>> _parseList(dynamic raw) =>
       (raw as List? ?? []).map((e) => Map<String, dynamic>.from(e as Map)).toList();
 
-  // ─── Login ────────────────────────────────────────────────────────────────
   Future<void> _login() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -195,8 +187,7 @@ class _LoginPageState extends State<LoginPage>
       } else if (data['valid'] != true) {
         _shakeCtrl.forward(from: 0);
         final msg = (data['message'] ?? '').toString().toLowerCase();
-        if (msg.contains('perangkat') || msg.contains('device') ||
-            msg.contains('another')) {
+        if (msg.contains('perangkat') || msg.contains('device') || msg.contains('another')) {
           _showAlert(
             title:   'Sesi Aktif',
             message: 'Akun ini sedang login di perangkat lain.',
@@ -241,7 +232,44 @@ class _LoginPageState extends State<LoginPage>
     if (mounted) setState(() => _isLoading = false);
   }
 
-  // ─── Alert dialog ─────────────────────────────────────────────────────────
+  Future<void> _claimFreeTrial() async {
+    setState(() => _isLoading = true);
+    try {
+      final res = await http.post(
+        Uri.parse('$baseUrl/api/free-trial'),
+        body: {'androidId': _androidId ?? 'unknown'},
+      );
+      final data = jsonDecode(res.body);
+
+      if (data['valid'] == true) {
+        final prefs = await SharedPreferences.getInstance();
+        prefs.setString('username', data['username']);
+        prefs.setString('password', data['password']);
+        prefs.setString('key', data['key']);
+        
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => SplashScreen(
+              username: data['username'], password: data['password'],
+              role: data['role'], sessionKey: data['key'],
+              expiredDate: data['expiredDate'],
+              listBug: _parseList(data['listBug']),
+              listDoos: [], 
+              news: _parseList(data['news']),
+            )),
+          );
+        }
+      } else {
+        _showAlert(title: 'Gagal', message: data['message'] ?? 'Gagal klaim trial', type: _AlertType.error);
+      }
+    } catch (e) {
+      _showAlert(title: 'Error', message: 'Koneksi error', type: _AlertType.error);
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   void _showAlert({
     required String title,
     required String message,
@@ -327,7 +355,6 @@ class _LoginPageState extends State<LoginPage>
     );
   }
 
-  // ─── Build ────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -374,14 +401,12 @@ class _LoginPageState extends State<LoginPage>
     );
   }
 
-  // ─── Logo ─────────────────────────────────────────────────────────────────
   Widget _buildLogo() {
     return AnimatedBuilder(
       animation: _logoGlow,
       builder: (_, __) => Stack(
         alignment: Alignment.center,
         children: [
-          // Outer ring glow
           Container(
             width: 130, height: 130,
             decoration: BoxDecoration(
@@ -395,7 +420,6 @@ class _LoginPageState extends State<LoginPage>
               ),
             ),
           ),
-          // Outer ring
           Container(
             width: 110, height: 110,
             decoration: BoxDecoration(
@@ -406,7 +430,6 @@ class _LoginPageState extends State<LoginPage>
               ),
             ),
           ),
-          // Mid ring
           Container(
             width: 92, height: 92,
             decoration: BoxDecoration(
@@ -417,7 +440,6 @@ class _LoginPageState extends State<LoginPage>
               ),
             ),
           ),
-          // Core
           Hero(
             tag: 'logo',
             child: Container(
@@ -488,7 +510,6 @@ class _LoginPageState extends State<LoginPage>
     ]);
   }
 
-  // ─── Form ─────────────────────────────────────────────────────────────────
   Widget _buildForm() {
     return Container(
       padding: const EdgeInsets.all(24),
@@ -508,7 +529,6 @@ class _LoginPageState extends State<LoginPage>
       child: Form(
         key: _formKey,
         child: Column(children: [
-          // Section header with icon
           Row(children: [
             Container(
               width: 5, height: 20,
@@ -527,7 +547,6 @@ class _LoginPageState extends State<LoginPage>
           ]),
           const SizedBox(height: 22),
 
-          // Username
           _LoginField(
             controller: userCtrl,
             label: 'Username',
@@ -537,7 +556,6 @@ class _LoginPageState extends State<LoginPage>
           ),
           const SizedBox(height: 16),
 
-          // Password
           _LoginField(
             controller: passCtrl,
             label: 'Password',
@@ -550,7 +568,6 @@ class _LoginPageState extends State<LoginPage>
           ),
           const SizedBox(height: 28),
 
-          // Submit
           _LoginButton(
             isLoading: _isLoading,
             pulseAnim: _btnPulse,
@@ -562,69 +579,69 @@ class _LoginPageState extends State<LoginPage>
   }
 
   Widget _buildFooter() {
-  return Column(children: [
-    
-    // 🔥 TOMBOL FREE TRIAL 🔥
-    GestureDetector(
-      onTap: _isLoading ? null : _claimFreeTrial,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        decoration: BoxDecoration(
-          color: _C.green.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: _C.green.withOpacity(0.5)),
-        ),
-        child: const Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.card_giftcard, color: _C.green, size: 18),
-            SizedBox(width: 8),
-            Text('Klaim Free Access 1 Hari', style: TextStyle(color: _C.green, fontWeight: FontWeight.bold, fontSize: 13)),
-          ],
-        ),
-      ),
-    ),
-    
-    const SizedBox(height: 20),
-
-    // Tombol Beli Sekarang (Buka Web Order)
-    Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-      const Text('Belum punya akses? ',
-          style: TextStyle(color: _C.textSub, fontSize: 13)),
+    return Column(children: [
+      
+      // 🔥 TOMBOL FREE TRIAL 1 HARI 🔥
       GestureDetector(
-        onTap: () async {
-          // 🔥 UBAH URL INI DENGAN DOMAIN/PORT PTERODACTYL ANDA 🔥
-          final url = Uri.parse('http://alfa-store-officials.alfamarket2.my.id:3505/order.html');
-          if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
-            if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Gagal membuka halaman order')),
-              );
-            }
-          }
-        },
-        child: ShaderMask(
-          shaderCallback: (b) => _C.accentGrad.createShader(b),
-          child: const Text('BELI SEKARANG',
-              style: TextStyle(color: Colors.white, fontSize: 13,
-                  fontWeight: FontWeight.w800, letterSpacing: 0.5)),
+        onTap: _isLoading ? null : _claimFreeTrial,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          decoration: BoxDecoration(
+            color: _C.green.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: _C.green.withOpacity(0.5)),
+          ),
+          child: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.card_giftcard, color: _C.green, size: 18),
+              SizedBox(width: 8),
+              Text('Klaim Free Access 1 Hari', style: TextStyle(color: _C.green, fontWeight: FontWeight.bold, fontSize: 13)),
+            ],
+          ),
         ),
       ),
-    ]),
-    
-    const SizedBox(height: 24),
-    
-    // Copyright
-    Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-      Icon(Icons.circle, color: _C.blueMid, size: 5),
-      const SizedBox(width: 8),
-      const Text('© 2026 X-Dark Project',
-          style: TextStyle(color: _C.textDim, fontSize: 11,
-              fontWeight: FontWeight.w500, letterSpacing: 0.5)),
-      const SizedBox(width: 8),
-      Icon(Icons.circle, color: _C.blueMid, size: 5),
-    ]),
-  ]);
+      
+      const SizedBox(height: 20),
+
+      // Tombol Beli Sekarang (Buka Web Order)
+      Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+        const Text('Belum punya akses? ',
+            style: TextStyle(color: _C.textSub, fontSize: 13)),
+        GestureDetector(
+          onTap: () async {
+            final url = Uri.parse('http://alfa-store-officials.alfamarket2.my.id:3505/order.html');
+            if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Gagal membuka halaman order')),
+                );
+              }
+            }
+          },
+          child: ShaderMask(
+            shaderCallback: (b) => _C.accentGrad.createShader(b),
+            child: const Text('BELI SEKARANG',
+                style: TextStyle(color: Colors.white, fontSize: 13,
+                    fontWeight: FontWeight.w800, letterSpacing: 0.5)),
+          ),
+        ),
+      ]),
+      
+      const SizedBox(height: 24),
+      
+      // Copyright
+      Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+        Icon(Icons.circle, color: _C.blueMid, size: 5),
+        const SizedBox(width: 8),
+        const Text('© 2026 X-Dark Project',
+            style: TextStyle(color: _C.textDim, fontSize: 11,
+                fontWeight: FontWeight.w500, letterSpacing: 0.5)),
+        const SizedBox(width: 8),
+        Icon(Icons.circle, color: _C.blueMid, size: 5),
+      ]),
+    ]);
+  }
 }
 
 // ─── Login Field ──────────────────────────────────────────────────────────────
