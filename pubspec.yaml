@@ -50,11 +50,11 @@ flutter:
   assets:
     - assets/images/logo.jpg
     - assets/images/logo.png
-    - assets/images/login.png
     - assets/images/reze.png
     - assets/videos/landing.mp4
     - assets/videos/splash.mp4
     - assets/videos/banner.mp4
+    - assets/videos/login.mp4
     - assets/videos/background.mp4
 
   fonts:
