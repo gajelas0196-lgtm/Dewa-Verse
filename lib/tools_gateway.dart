@@ -45,7 +45,7 @@ class _C {
   static const text      = Color(0xFFF0F0F0); 
   static const textSub   = Color(0xFFA0A0B0); 
   static const textDim   = Color(0xFF505060); 
-}
+
 
   static const LinearGradient metalGrad = LinearGradient(
     colors: [steel, blueMid, blueLight],
